@@ -1,8 +1,24 @@
 import React, { useState, useCallback, useRef, useEffect, memo } from 'react';
+import { createSet, createAdd, createRemove, createToggle } from './actions'
 import './App.css';
 
 let idSeq = Date.now()
 const storeKey = '__TODOS__'
+
+// bind dispatch with action creators
+function bindActionCreators (actionCreators, dispatch) {
+  const res = {}
+
+  for (let key in actionCreators) {
+    res[key] = function(...args) {
+      const actionCreator = actionCreators[key]
+      const action = actionCreator(...args)
+      dispatch(action)
+    }
+  }
+
+  return res
+}
 
 const Control = memo(function Control (props) {
   const { dispatch } = props
@@ -12,14 +28,11 @@ const Control = memo(function Control (props) {
     const newText = inputRef.current.value.trim()
     if (newText.length === 0) return
 
-    dispatch({
-      type: 'add',
-      payload: {
-        id: ++idSeq,
-        text: newText,
-        complete: false
-      }
-    })
+    dispatch(createAdd({
+      id: ++idSeq,
+      text: newText,
+      complete: false
+    }))
 
     inputRef.current.value = ''
   }
@@ -40,18 +53,11 @@ const Control = memo(function Control (props) {
 
 const TodoItem = memo(function TodoItem (props) {
   const { todo: { id, text, complete }, dispatch } = props
-  console.log('>dispatch', dispatch)
   const onChange = () => {
-    dispatch({
-      type: 'toggle',
-      payload: id
-    })
+    dispatch(createToggle(id))
   }
   const onRemove = () => {
-    dispatch({
-      type: 'remove',
-      payload: id
-    })
+    dispatch(createRemove(id))
   }
   return (
     <li>
@@ -129,8 +135,8 @@ function App() {
 
     // Let's do this by dispatch
     // setTodos(todos)
-    dispatch({ type: 'set', payload: todos })
-  }, [])
+    dispatch(createSet(todos))
+  }, [dispatch])
 
   useEffect(() => {
     localStorage.setItem(storeKey, JSON.stringify(todos))
