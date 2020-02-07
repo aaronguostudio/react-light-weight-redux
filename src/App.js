@@ -1,11 +1,9 @@
-import React, { useState, useCallback, useRef, useEffect, memo } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import { createSet, createAdd, createRemove, createToggle } from './actions'
 import reducer from './reducers'
 import './App.css';
 
-let idSeq = Date.now()
 const storeKey = '__TODOS__'
-
 // bind dispatch with action creators
 function bindActionCreators (actionCreators, dispatch) {
   const res = {}
@@ -29,11 +27,7 @@ const Control = memo(function Control (props) {
     const newText = inputRef.current.value.trim()
     if (newText.length === 0) return
 
-    addTodo({
-      id: ++idSeq,
-      text: newText,
-      complete: false
-    })
+    addTodo(newText)
 
     inputRef.current.value = ''
   }
@@ -91,10 +85,21 @@ const Todos = memo(function Todos (props) {
   )
 })
 
+let store = {
+  todos: [],
+  incrementCount: 0
+}
+
 function App() {
 
   const [todos, setTodos] = useState([])
   const [incrementCount, setIncrementCount] = useState(0)
+  useEffect(() => {
+    Object.assign(store, {
+      todos,
+      incrementCount
+    })
+  }, [todos, incrementCount])
 
   // Let's move all of these operations into dispatch
   // const addTodo = useCallback((todo) => {
@@ -150,21 +155,25 @@ function App() {
   // If we want to track all of the operations, it will be helpful for us the manage the data
   // - one solition is make each operation as an object
   // - create a centerlized function to do the operation
-  const dispatch = useCallback(action => {
-    const state = { todos, incrementCount }
-
+  const dispatch = action => {
     const setters = {
       todos: setTodos,
       incrementCount: setIncrementCount
     }
 
-    const newState = reducer(state, action)
+    if ('function' === typeof action) {
+      // will run the logic and dispatch directly
+      // we need to pass a function to get the latest state
+      action(dispatch, () => store)
+      return
+    }
+
+    const newState = reducer(store, action)
 
     for (let key in newState) {
       setters[key](newState[key])
     }
-
-  }, [todos, incrementCount])
+  }
 
   useEffect(() => {
     const todos = JSON.parse(localStorage.getItem(storeKey) || '[]')
