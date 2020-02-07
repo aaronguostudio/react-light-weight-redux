@@ -92,7 +92,8 @@ const Todos = memo(function Todos (props) {
 
 function App() {
 
-  const [ todos, setTodos ] = useState([])
+  const [todos, setTodos] = useState([])
+  const [incrementCount, setIncrementCount] = useState(0)
 
   // Let's move all of these operations into dispatch
   // const addTodo = useCallback((todo) => {
@@ -107,29 +108,59 @@ function App() {
   //   setTodos(todos => todos.map(todo => todo.id === id ? {...todo, complete: !todo.complete} : todo))
   // }, [])
 
+  // replace the logic in dispatch
+  // receive state and action, return new data after the action
+  function reducer (state, action) {
+    const { type, payload } = action
+    const { todos, incrementCount } = state
+
+    switch(type) {
+      case 'set':
+        return {
+          ...state,
+          todos: payload,
+          incrementCount: incrementCount + 1
+        }
+      case 'add':
+        return {
+          ...state,
+          todos: [...todos, payload],
+          incrementCount: incrementCount + 1
+        }
+      case 'remove':
+        return {
+          ...state,
+          todos: todos.filter(todo => todo.id !== payload)
+        }
+      case 'toggle':
+        return {
+          ...state,
+          todos: todos.map(todo => todo.id === payload ? {...todo, complete: !todo.complete} : todo)
+        }
+      default:
+    }
+    return state
+  }
+
   // We have several operations on todo
   // If we want to track all of the operations, it will be helpful for us the manage the data
   // - one solition is make each operation as an object
   // - create a centerlized function to do the operation
   const dispatch = useCallback(action => {
-    const { type, payload } = action
-    switch (type) {
-      case 'set':
-        setTodos(payload)
-        break
-      case 'add':
-        setTodos(todos => [...todos, payload])
-        break
-      case 'toggle':
-        setTodos(todos => todos.map(todo => todo.id === payload ? {...todo, complete: !todo.complete} : todo))
-        break
-      case 'remove':
-        setTodos(todos => todos.filter(todo => todo.id !== payload))
-        break
-      default:
+    const state = { todos, incrementCount }
 
+    const setters = {
+      todos: setTodos,
+      incrementCount: setIncrementCount
     }
-  }, [])
+
+    const newState = reducer(state, action)
+
+    for (let key in newState) {
+      setters[key](newState[key])
+    }
+
+  }, [todos, incrementCount])
 
   useEffect(() => {
     const todos = JSON.parse(localStorage.getItem(storeKey) || '[]')
@@ -137,11 +168,11 @@ function App() {
     // Let's do this by dispatch
     // setTodos(todos)
     dispatch(createSet(todos))
-  }, [dispatch])
+  }, [])
 
   useEffect(() => {
     localStorage.setItem(storeKey, JSON.stringify(todos))
-  }, [todos])
+  }, [todos, incrementCount])
 
   return (
     <div>
