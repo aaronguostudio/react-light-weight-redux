@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect, memo } from 'react';
 import { createSet, createAdd, createRemove, createToggle } from './actions'
+import reducer from './reducers'
 import './App.css';
 
 let idSeq = Date.now()
@@ -108,39 +109,42 @@ function App() {
   //   setTodos(todos => todos.map(todo => todo.id === id ? {...todo, complete: !todo.complete} : todo))
   // }, [])
 
+
   // replace the logic in dispatch
   // receive state and action, return new data after the action
-  function reducer (state, action) {
-    const { type, payload } = action
-    const { todos, incrementCount } = state
+  // this will be replaced by combineReducers
+  // function reducer (state, action) {
+  //   const { type, payload } = action
+  //   const { todos, incrementCount } = state
 
-    switch(type) {
-      case 'set':
-        return {
-          ...state,
-          todos: payload,
-          incrementCount: incrementCount + 1
-        }
-      case 'add':
-        return {
-          ...state,
-          todos: [...todos, payload],
-          incrementCount: incrementCount + 1
-        }
-      case 'remove':
-        return {
-          ...state,
-          todos: todos.filter(todo => todo.id !== payload)
-        }
-      case 'toggle':
-        return {
-          ...state,
-          todos: todos.map(todo => todo.id === payload ? {...todo, complete: !todo.complete} : todo)
-        }
-      default:
-    }
-    return state
-  }
+  //   switch(type) {
+  //     case 'set':
+  //       return {
+  //         ...state,
+  //         todos: payload,
+  //         incrementCount: incrementCount + 1
+  //       }
+  //     case 'add':
+  //       return {
+  //         ...state,
+  //         todos: [...todos, payload],
+  //         incrementCount: incrementCount + 1
+  //       }
+  //     case 'remove':
+  //       return {
+  //         ...state,
+  //         todos: todos.filter(todo => todo.id !== payload)
+  //       }
+  //     case 'toggle':
+  //       return {
+  //         ...state,
+  //         todos: todos.map(todo => todo.id === payload ? {...todo, complete: !todo.complete} : todo)
+  //       }
+  //     default:
+  //   }
+  //   return state
+  // }
+
 
   // We have several operations on todo
   // If we want to track all of the operations, it will be helpful for us the manage the data
